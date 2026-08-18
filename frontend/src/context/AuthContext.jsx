@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (role, email, password) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', { role, email, password });
+      const response = await axios.post('/api/auth/login', { role, email, password });
       setUser(response.data);
       return response.data;
     } catch (error) {

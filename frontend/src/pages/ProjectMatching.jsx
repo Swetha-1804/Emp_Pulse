@@ -13,7 +13,7 @@ const ProjectMatching = () => {
     e.preventDefault();
     if (requirements.trim()) {
       try {
-        const response = await axios.post('http://localhost:5000/api/ai/match-project', { requirements });
+        const response = await axios.post('/api/ai/match-project', { requirements });
         setMatches(response.data.matches);
         setAllocated({}); // Reset allocation state on new search
       } catch (err) {

@@ -79,7 +79,7 @@ const SkillVerification = () => {
     
     // Save to backend
     try {
-      await axios.post('http://localhost:5000/api/skills/verify', {
+      await axios.post('/api/skills/verify', {
         userId: user?.id || 1,
         skillName: selectedSkill,
         experienceType,
@@ -122,7 +122,7 @@ const SkillVerification = () => {
       return;
     }
     try {
-      const response = await axios.post('http://localhost:5000/api/github/real-verify', {
+      const response = await axios.post('/api/github/real-verify', {
         username: githubUsername,
         token: githubToken,
         selectedSkill
@@ -140,7 +140,7 @@ const SkillVerification = () => {
     setAssessmentStatus('loading');
     setAssessmentModal(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/assessment/generate', { language: lang });
+      const response = await axios.post('/api/assessment/generate', { language: lang });
       setQuestions(response.data.questions);
       setAssessmentStatus('active');
     } catch (err) {
@@ -152,7 +152,7 @@ const SkillVerification = () => {
   const submitAssessment = async () => {
     setAssessmentStatus('grading');
     try {
-      const response = await axios.post('http://localhost:5000/api/assessment/submit', { answers, language: assessmentLanguage });
+      const response = await axios.post('/api/assessment/submit', { answers, language: assessmentLanguage });
       setAssessmentScore(response.data.score);
       setAssessmentStatus('completed');
     } catch (err) {

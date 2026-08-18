@@ -16,7 +16,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
     setIsResetting(true);
     setResetStatus(null);
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/reset-password', { email: user.email });
+      const response = await axios.post('/api/auth/reset-password', { email: user.email });
       setResetStatus({ type: 'success', message: response.data.message });
     } catch (err) {
       setResetStatus({ type: 'error', message: 'Failed to send reset link.' });

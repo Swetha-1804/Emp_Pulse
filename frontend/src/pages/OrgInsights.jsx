@@ -19,7 +19,7 @@ const OrgInsights = () => {
     setShowSuggestions(false);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/ai/insights', { query: userQuery });
+      const response = await axios.post('/api/ai/insights', { query: userQuery });
       setMessages(prev => [...prev, { sender: 'ai', text: response.data.reply }]);
     } catch (err) {
       console.error(err);

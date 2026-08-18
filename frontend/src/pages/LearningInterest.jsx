@@ -12,7 +12,7 @@ const LearningInterest = () => {
     e.preventDefault();
     if (interest.trim()) {
       try {
-        const response = await axios.post('http://localhost:5000/api/learning', { interest });
+        const response = await axios.post('/api/learning', { interest });
         setExperts(response.data.experts);
         setConnectedExperts(new Set()); // reset connections on new search
       } catch (err) {

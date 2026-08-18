@@ -93,7 +93,7 @@ const SupportModal = ({ isOpen, onClose }) => {
                           setExpandedFaq(q);
                           if (!faqAnswers[q]) {
                             try {
-                              const res = await axios.post('http://localhost:5000/api/support/faq', { question: q });
+                              const res = await axios.post('/api/support/faq', { question: q });
                               setFaqAnswers(prev => ({ ...prev, [q]: res.data.answer }));
                             } catch (e) {
                               setFaqAnswers(prev => ({ ...prev, [q]: "Error fetching answer." }));
@@ -163,7 +163,7 @@ const SupportModal = ({ isOpen, onClose }) => {
                     setChatInput('');
                     setIsAiTyping(true);
                     try {
-                      const res = await axios.post('http://localhost:5000/api/support/ai-chat', { message: userMsg });
+                      const res = await axios.post('/api/support/ai-chat', { message: userMsg });
                       setChatMessages(prev => [...prev, { sender: 'ai', text: res.data.reply }]);
                     } catch(err) {
                       setChatMessages(prev => [...prev, { sender: 'ai', text: "Sorry, I couldn't connect to the server." }]);
@@ -191,7 +191,7 @@ const SupportModal = ({ isOpen, onClose }) => {
                   <form onSubmit={async (e) => { 
                     e.preventDefault(); 
                     try {
-                      const res = await axios.post('http://localhost:5000/api/support/ticket', { category: ticketCategory, description: ticketDesc });
+                      const res = await axios.post('/api/support/ticket', { category: ticketCategory, description: ticketDesc });
                       setTicketStatus(res.data.message);
                       setTicketDesc('');
                     } catch (err) {
