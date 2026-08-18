@@ -61,11 +61,26 @@ const SkillsOverview = () => {
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--text-secondary)' }}>Experience Levels</h3>
             <div style={{ height: '300px' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={metrics.experienceData} layout="vertical" margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={80} />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="var(--primary)" radius={[0, 4, 4, 0]} />
+                <BarChart data={metrics.experienceData} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}>
+                  <defs>
+                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.9}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)'}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: 'var(--text-secondary)'}} />
+                  <Tooltip 
+                    cursor={{fill: 'rgba(255, 255, 255, 0.05)'}} 
+                    contentStyle={{backgroundColor: 'var(--surface-color)', border: '1px solid var(--border-color)', borderRadius: '8px', color: 'var(--text-primary)', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}}
+                  />
+                  <Bar 
+                    dataKey="count" 
+                    fill="url(#colorCount)" 
+                    radius={[6, 6, 0, 0]} 
+                    animationDuration={1500} 
+                    barSize={40}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
