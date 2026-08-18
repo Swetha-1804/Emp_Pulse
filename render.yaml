@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: emp-pulse-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: DB_PATH
+        value: /var/data/database.sqlite
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: sqlite-data
+      mountPath: /var/data
+      sizeGB: 1

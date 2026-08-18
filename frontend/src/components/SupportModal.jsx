@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { HelpCircle, Search, MessageSquare, Ticket, PlayCircle, X, Paperclip, ChevronRight, CheckCircle } from 'lucide-react';
-import axios from 'axios';
+import axios from '../api/client';
 
 const SupportModal = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('faq');

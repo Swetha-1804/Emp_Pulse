@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Search, Users, Sparkles } from 'lucide-react';
-import axios from 'axios';
+import axios from '../api/client';
 
 const ProjectMatching = () => {
   const [requirements, setRequirements] = useState('');

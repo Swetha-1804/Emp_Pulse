@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Settings, User, Bell, Cpu, Shield, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import axios from '../api/client';
 
 const SettingsModal = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState('profile');

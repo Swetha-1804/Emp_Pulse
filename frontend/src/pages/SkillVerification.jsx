@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { GitBranch, CheckCircle, UploadCloud, Star, Award, Code, X, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import axios from '../api/client';
 
 const SkillVerification = () => {
   const { user } = useAuth();

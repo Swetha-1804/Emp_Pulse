@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Sparkles, Send, User } from 'lucide-react';
-import axios from 'axios';
+import axios from '../api/client';
 
 const LearningInterest = () => {
   const [interest, setInterest] = useState('');

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Bot, Send, Lightbulb, Paperclip } from 'lucide-react';
-import axios from 'axios';
+import axios from '../api/client';
 
 const OrgInsights = () => {
   const [query, setQuery] = useState('');

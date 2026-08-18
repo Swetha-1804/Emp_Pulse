@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { Activity } from 'lucide-react';
-import axios from 'axios';
+import axios from '../api/client';
 
 const SkillsOverview = () => {
   const [metrics, setMetrics] = useState({
