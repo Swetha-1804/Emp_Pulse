@@ -46,6 +46,17 @@ function initializeSchema() {
       )
     `);
 
+    // Tickets table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS tickets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT NOT NULL,
+        description TEXT NOT NULL,
+        status TEXT DEFAULT 'open',
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Seed mock data if empty
     db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
       if (row && row.count === 0) {

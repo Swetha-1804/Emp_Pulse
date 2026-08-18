@@ -574,11 +574,42 @@ router.post('/support/ai-chat', (req, res) => {
 });
 
 router.post('/support/ticket', (req, res) => {
-  // In a real app, save this to a database and notify admin
   const { category, description } = req.body;
-  setTimeout(() => {
-    res.json({ success: true, message: `Ticket under category '${category}' submitted successfully.` });
-  }, 500);
+  
+  // 1. Save to SQLite database
+  db.run(`INSERT INTO tickets (category, description) VALUES (?, ?)`, [category, description], function(err) {
+    if (err) return res.status(500).json({ error: 'Failed to save ticket to database' });
+    
+    // 2. Send email notification
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+      const transporter = nodemailer.createTransport({
+        service: 'gmail', // or use host/port depending on provider
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS
+        }
+      });
+
+      const mailOptions = {
+        from: process.env.SMTP_USER,
+        to: process.env.SUPPORT_EMAIL || process.env.SMTP_USER,
+        subject: `[Emp Pulse Support] New Ticket: ${category}`,
+        text: `A new support ticket has been submitted.\n\nCategory: ${category}\nDescription:\n${description}\n\nTicket ID: #${this.lastID}`
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error("Error sending email:", error);
+          // Return success anyway since the ticket is saved
+          return res.json({ success: true, message: `Ticket under category '${category}' submitted (Email skipped).` });
+        }
+        res.json({ success: true, message: `Ticket under category '${category}' submitted and support team notified.` });
+      });
+    } else {
+      // If email isn't configured, just return success
+      res.json({ success: true, message: `Ticket under category '${category}' saved to database.` });
+    }
+  });
 });
 
 router.post('/support/faq', (req, res) => {
