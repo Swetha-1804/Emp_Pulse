@@ -57,6 +57,20 @@ function initializeSchema() {
       )
     `);
 
+    // Mentorship Requests table
+    db.run(`
+      CREATE TABLE IF NOT EXISTS mentorship_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        requesterId INTEGER,
+        expertId INTEGER,
+        skill TEXT,
+        status TEXT DEFAULT 'pending',
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (requesterId) REFERENCES users (id),
+        FOREIGN KEY (expertId) REFERENCES users (id)
+      )
+    `);
+
     // Seed mock data if empty
     db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
       if (row && row.count === 0) {

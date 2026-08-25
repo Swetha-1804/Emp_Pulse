@@ -58,6 +58,14 @@ const SettingsModal = ({ isOpen, onClose }) => {
             >
               <Shield size={18} /> Security & Privacy
             </button>
+            {(user?.role === 'manager' || user?.role === 'admin') && (
+              <button 
+                className={`tab-btn ${activeTab === 'users' ? 'active' : ''}`}
+                onClick={() => setActiveTab('users')}
+              >
+                <User size={18} /> User Management
+              </button>
+            )}
           </div>
 
           <div className="tab-content">
@@ -137,6 +145,45 @@ const SettingsModal = ({ isOpen, onClose }) => {
                     Log out of all other sessions
                   </button>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'users' && (user?.role === 'manager' || user?.role === 'admin') && (
+              <div>
+                <h3 style={{ marginBottom: '1.5rem', fontSize: '1.125rem' }}>Add New Employee</h3>
+                <form onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.target);
+                  const data = Object.fromEntries(formData.entries());
+                  try {
+                    await axios.post('/api/admin/add-employee', data);
+                    alert('Employee added successfully!');
+                    e.target.reset();
+                  } catch (err) {
+                    alert('Failed to add employee: ' + (err.response?.data?.error || err.message));
+                  }
+                }}>
+                  <div className="form-group">
+                    <label className="form-label">Full Name</label>
+                    <input type="text" name="name" className="input-field" required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Email Address</label>
+                    <input type="email" name="email" className="input-field" required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Temporary Password</label>
+                    <input type="password" name="password" className="input-field" required minLength="6" />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Role</label>
+                    <select name="role" className="input-field" required>
+                      <option value="employee">Employee</option>
+                      <option value="manager">Manager</option>
+                    </select>
+                  </div>
+                  <button type="submit" className="btn btn-primary">Create Employee Account</button>
+                </form>
               </div>
             )}
           </div>

@@ -80,6 +80,25 @@ router.post('/auth/reset-password', async (req, res) => {
   });
 });
 
+// 1.6 Update Password (After clicking reset link)
+router.post('/auth/update-password', (req, res) => {
+  const { email, newPassword } = req.body;
+  
+  if (!email || !newPassword) {
+    return res.status(400).json({ error: 'Email and new password are required' });
+  }
+
+  db.run('UPDATE users SET password = ? WHERE email = ?', [newPassword, email], function(err) {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to update password' });
+    }
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ success: true, message: 'Password updated successfully!' });
+  });
+});
+
 // 2. Skill Verification
 router.post('/skills/verify', (req, res) => {
   const { userId, skillName, experienceType, years } = req.body;
@@ -623,6 +642,72 @@ router.post('/support/faq', (req, res) => {
   setTimeout(() => {
     res.json({ answer: faqs[question] || "Sorry, I couldn't find an answer to that specific question." });
   }, 300);
+});
+
+// 11. Mentorship / Connections
+router.get('/mentorship/experts/:skill', (req, res) => {
+  const { skill } = req.params;
+  const currentUserId = req.query.userId;
+  // Find verified users for this skill (excluding the requester)
+  const query = `
+    SELECT u.id, u.name, u.email, u.role
+    FROM users u
+    JOIN skills s ON u.id = s.userId
+    WHERE s.skillName = ? AND s.isVerified = 1 AND u.id != ?
+  `;
+  db.all(query, [skill.toLowerCase(), currentUserId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+router.post('/mentorship/request', (req, res) => {
+  const { requesterId, expertId, skill } = req.body;
+  if (!requesterId || !expertId || !skill) return res.status(400).json({ error: 'Missing required fields' });
+
+  const query = `INSERT INTO mentorship_requests (requesterId, expertId, skill) VALUES (?, ?, ?)`;
+  db.run(query, [requesterId, expertId, skill.toLowerCase()], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, requestId: this.lastID });
+  });
+});
+
+router.get('/mentorship/pending/:userId', (req, res) => {
+  const { userId } = req.params;
+  const query = `
+    SELECT m.id, m.skill, m.createdAt, u.name as requesterName, u.email as requesterEmail
+    FROM mentorship_requests m
+    JOIN users u ON m.requesterId = u.id
+    WHERE m.expertId = ? AND m.status = 'pending'
+  `;
+  db.all(query, [userId], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+router.post('/mentorship/respond', (req, res) => {
+  const { requestId, status } = req.body; // status: 'accepted' or 'rejected'
+  if (!['accepted', 'rejected'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+
+  const query = `UPDATE mentorship_requests SET status = ? WHERE id = ?`;
+  db.run(query, [status, requestId], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
+// 12. Admin Routes
+router.post('/admin/add-employee', (req, res) => {
+  const { name, email, password, role } = req.body;
+  if (!name || !email || !password || !role) return res.status(400).json({ error: 'All fields are required' });
+  
+  // Note: in a real app you'd verify if the requester has admin rights using a token middleware
+  const query = `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`;
+  db.run(query, [name, email, password, role], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, userId: this.lastID });
+  });
 });
 
 module.exports = router;
