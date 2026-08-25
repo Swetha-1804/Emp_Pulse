@@ -15,9 +15,26 @@ const LearningInterest = () => {
     e.preventDefault();
     if (interest.trim()) {
       try {
-        const response = await axios.get(`/api/mentorship/experts/${interest.trim()}?userId=${user?.id}`);
+        // Make the search smarter: extract known skills if they type a full sentence
+        const availableSkills = ['python', 'sql', 'dbt', 'snowflake', 'azure', 'react', 'javascript', 'java'];
+        const lowerInput = interest.toLowerCase();
+        let extractedSkill = interest.trim().toLowerCase();
+        
+        for (const s of availableSkills) {
+          if (lowerInput.includes(s)) {
+            extractedSkill = s;
+            break;
+          }
+        }
+
+        const response = await axios.get(`/api/mentorship/experts/${extractedSkill}?userId=${user?.id}`);
         setExperts(response.data);
         setConnectedExperts(new Set()); // reset connections on new search
+        
+        // Optionally update the input field to show what was extracted
+        if (extractedSkill !== lowerInput) {
+           setInterest(extractedSkill);
+        }
       } catch (err) {
         console.error(err);
       }
