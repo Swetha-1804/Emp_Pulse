@@ -710,4 +710,27 @@ router.post('/admin/add-employee', (req, res) => {
   });
 });
 
+router.get('/admin/employees', (req, res) => {
+  db.all('SELECT id, name, email, role FROM users', [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+router.delete('/admin/delete-employee/:id', (req, res) => {
+  const { id } = req.params;
+  
+  // Need to also clean up associated data (skills, experience, mentorship_requests)
+  // Or rely on CASCADE if we had it, but SQLite without foreign_keys PRAGMA ON might not cascade
+  db.serialize(() => {
+    db.run(`DELETE FROM skills WHERE userId = ?`, [id]);
+    db.run(`DELETE FROM experience WHERE userId = ?`, [id]);
+    db.run(`DELETE FROM mentorship_requests WHERE requesterId = ? OR expertId = ?`, [id, id]);
+    db.run(`DELETE FROM users WHERE id = ?`, [id], function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true, deletedCount: this.changes });
+    });
+  });
+});
+
 module.exports = router;
