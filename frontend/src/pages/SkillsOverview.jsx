@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from 'recharts';
 import { Activity } from 'lucide-react';
 import axios from '../api/client';
 
@@ -34,26 +34,55 @@ const SkillsOverview = () => {
         <div className="grid grid-cols-2" style={{ alignItems: 'start' }}>
           <div>
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--text-secondary)' }}>Skill Distribution</h3>
-            <div style={{ height: '300px' }}>
+            <div style={{ height: '300px', position: 'relative' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
+                  <defs>
+                    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.15" />
+                    </filter>
+                  </defs>
                   <Pie
                     data={metrics.skillData}
                     cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={5}
+                    cy="45%"
+                    innerRadius={75}
+                    outerRadius={105}
+                    paddingAngle={8}
                     dataKey="value"
-                    label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    cornerRadius={12}
+                    stroke="none"
+                    filter="url(#shadow)"
                   >
                     {metrics.skillData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      border: 'none', 
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                      padding: '12px 16px',
+                      fontWeight: '500'
+                    }}
+                    itemStyle={{ color: 'var(--text-primary)' }}
+                    formatter={(value, name) => [`${value} verified employees`, name]}
+                  />
+                  <Legend 
+                    verticalAlign="bottom" 
+                    height={36} 
+                    iconType="circle"
+                    formatter={(value) => <span style={{ color: 'var(--text-secondary)', fontWeight: 500, paddingLeft: '4px' }}>{value}</span>}
+                  />
                 </PieChart>
               </ResponsiveContainer>
+              
+              {/* Center Text overlay */}
+              <div style={{ position: 'absolute', top: '45%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
+                <div style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-primary)', lineHeight: '1' }}>{metrics.verifiedCount}</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '4px' }}>Total</div>
+              </div>
             </div>
           </div>
           
