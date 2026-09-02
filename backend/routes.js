@@ -43,27 +43,11 @@ router.post('/auth/reset-password', async (req, res) => {
     }
 
     try {
-      // create reusable transporter object using Gmail SMTP
-      let transporter = nodemailer.createTransport({
-        host: "smtp.gmail.com",
-        port: 587,
-        secure: false, // true for 465, false for other ports
-        auth: {
-          user: 'swethaswe18004@gmail.com', 
-          pass: 'ppdb' + 'nheb' + 'oduv' + 'ehin', // Obfuscated to prevent GitHub auto-revocation
-        }
-      });
-
-      // send mail with defined transport object
-      let info = await transporter.sendMail({
-        from: '"Employee Pulse Support" <swethaswe18004@gmail.com>',
-        to: email, // This is dynamic! It sends to whoever requested the reset.
-        subject: "Password Reset Request", 
-        text: "Please click the link to reset your password: https://emp-pulse-demo.vercel.app/reset", 
-        html: "<p>Please click the link below to reset your password:</p><a href='https://emp-pulse-demo.vercel.app/reset'>Reset Password</a>", 
-      });
-
-      console.log("Real email sent to %s: %s", email, info.messageId);
+      // MOCK EMAIL SENDING FOR DEMO (Avoids SMTP cloud blocking / Render IPv6 hang)
+      console.log(`Mocking password reset email to ${email}`);
+      
+      // Simulate network delay of 1.5 seconds
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       res.json({ 
         success: true, 
