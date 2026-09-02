@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Settings, User, Bell, Cpu, Shield, X, Trash2 } from 'lucide-react';
+import { Settings, User, Bell, Cpu, Shield, X, Trash2, Search } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import axios from '../api/client';
 
-const EmployeeList = () => {
+const EmployeeList = ({ refreshTrigger }) => {
   const [employees, setEmployees] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   
   useEffect(() => {
     fetchEmployees();
-  }, []);
+  }, [refreshTrigger]);
 
   const fetchEmployees = async () => {
     try {
@@ -29,26 +30,50 @@ const EmployeeList = () => {
     }
   };
 
+  const filteredEmployees = employees.filter(emp => 
+    emp.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    emp.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div>
-      <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem' }}>Manage Employees</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {employees.map(emp => (
-          <div key={emp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
-            <div>
-              <p style={{ margin: 0, fontWeight: 500 }}>{emp.name}</p>
-              <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{emp.email} • {emp.role}</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <h3 style={{ margin: 0, fontSize: '1.125rem' }}>Manage Employees</h3>
+      </div>
+      
+      <div style={{ position: 'relative', marginBottom: '1rem' }}>
+        <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+        <input 
+          type="text" 
+          placeholder="Search by name or email..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="input-field"
+          style={{ paddingLeft: '35px', width: '100%' }}
+        />
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '5px' }}>
+        {filteredEmployees.length === 0 ? (
+          <p style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No employees found.</p>
+        ) : (
+          filteredEmployees.map(emp => (
+            <div key={emp.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+              <div>
+                <p style={{ margin: 0, fontWeight: 500 }}>{emp.name}</p>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--text-secondary)' }}>{emp.email} • {emp.role}</p>
+              </div>
+              <button 
+                onClick={() => handleDelete(emp.id)}
+                className="btn btn-outline" 
+                style={{ color: 'var(--danger)', borderColor: 'var(--danger)', padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title="Remove Employee"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
-            <button 
-              onClick={() => handleDelete(emp.id)}
-              className="btn btn-outline" 
-              style={{ color: 'var(--danger)', borderColor: 'var(--danger)', padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              title="Remove Employee"
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
@@ -59,6 +84,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
   const { user } = useAuth();
   const [resetStatus, setResetStatus] = useState(null);
   const [isResetting, setIsResetting] = useState(false);
+  const [refreshList, setRefreshList] = useState(0);
 
   if (!isOpen) return null;
 
@@ -211,8 +237,8 @@ const SettingsModal = ({ isOpen, onClose }) => {
                       await axios.post('/api/admin/add-employee', data);
                       alert('Employee added successfully!');
                       e.target.reset();
-                      // Refresh the list by tricking state
-                      setActiveTab(''); setTimeout(() => setActiveTab('users'), 0);
+                      // Update the refresh trigger so EmployeeList fetches instantly
+                      setRefreshList(prev => prev + 1);
                     } catch (err) {
                       alert('Failed to add employee: ' + (err.response?.data?.error || err.message));
                     }
@@ -240,7 +266,7 @@ const SettingsModal = ({ isOpen, onClose }) => {
                   </form>
                 </div>
                 <hr style={{ borderColor: 'var(--border-color)', margin: '1rem 0' }} />
-                <EmployeeList />
+                <EmployeeList refreshTrigger={refreshList} />
               </div>
             )}
           </div>
