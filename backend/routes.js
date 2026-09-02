@@ -43,31 +43,11 @@ router.post('/auth/reset-password', async (req, res) => {
     }
 
     try {
-      // create reusable transporter object using real SMTP credentials
-      let transporter = nodemailer.createTransport({
-        // Assuming Office 365/Outlook for corporate domains. If it's Google Workspace, this needs to be smtp.gmail.com
-        host: "smtp.office365.com",
-        port: 587,
-        secure: false, // true for 465, false for other ports
-        auth: {
-          user: 'swethap@systechusa.com', 
-          pass: 'Vidhparth@04', 
-        },
-        tls: {
-          ciphers: 'SSLv3'
-        }
-      });
-
-      // send mail with defined transport object
-      let info = await transporter.sendMail({
-        from: '"Employee Pulse Support" <swethap@systechusa.com>', // sender address MUST match authenticated user
-        to: email, // list of receivers
-        subject: "Password Reset Request", // Subject line
-        text: "Please click the link to reset your password: http://localhost:5173/reset", // plain text body
-        html: "<p>Please click the link below to reset your password:</p><a href='http://localhost:5173/reset'>Reset Password</a>", // html body
-      });
-
-      console.log("Real email sent to %s: %s", email, info.messageId);
+      // MOCK EMAIL SENDING FOR DEMO (Avoids SMTP cloud blocking)
+      console.log(`Mocking password reset email to ${email}`);
+      
+      // Simulate network delay of 1.5 seconds
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       res.json({ 
         success: true, 
