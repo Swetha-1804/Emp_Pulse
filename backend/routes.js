@@ -222,22 +222,62 @@ router.post('/ai/match-project', (req, res) => {
   });
 });
 
-// 6. Org Insights AI Mock
+// 6. Org Insights AI Mock - Now Dynamic!
 router.post('/ai/insights', (req, res) => {
   const { query } = req.body;
   const qLower = query.toLowerCase();
   
-  let reply = `Based on the dashboard data and your query "${query}", we currently have 3 major projects running. To support these, we have a growing need for Snowflake expertise.`;
-
-  if (qLower.includes("how many employees")) {
-    reply = "Systech currently has 17 active employees actively logged in and working across our projects, primarily divided into Engineering, Data, and DevOps roles.";
-  } else if (qLower.includes("most common skills")) {
-    reply = "The most commonly verified skills in our organization are currently SQL (4 employees), Python (3 employees), and dbt (3 employees).";
-  } else if (qLower.includes("learning interests")) {
-    reply = "Across the teams, the highest learning interest is currently directed towards dbt, with 24 employees requesting training.";
+  // 1. Employee Count Query
+  if (qLower.includes("how many employees") || qLower.includes("total employees") || qLower.includes("headcount")) {
+    db.get("SELECT COUNT(*) as count FROM users", (err, row) => {
+      if (err) return res.json({ reply: "Sorry, I encountered an error accessing the employee database." });
+      return res.json({ reply: `Systech currently has ${row.count} registered employees actively working across our projects.` });
+    });
+    return;
+  }
+  
+  // 2. Skills Query
+  if (qLower.includes("most common skills") || qLower.includes("top skills") || qLower.includes("what skills")) {
+    db.all("SELECT skillName, COUNT(*) as count FROM skills WHERE isVerified = 1 GROUP BY skillName ORDER BY count DESC LIMIT 3", (err, rows) => {
+      if (err) return res.json({ reply: "Sorry, I couldn't analyze the skills database right now." });
+      if (rows.length === 0) return res.json({ reply: "Currently, no verified skills have been recorded in the organization." });
+      
+      const skillText = rows.map(r => `${r.skillName.toUpperCase()} (${r.count} experts)`).join(', ');
+      return res.json({ reply: `The most commonly verified skills in our organization are currently: ${skillText}.` });
+    });
+    return;
   }
 
-  res.json({ reply });
+  // 3. Mentorship / Learning Interests Query
+  if (qLower.includes("learning interests") || qLower.includes("want to learn") || qLower.includes("training") || qLower.includes("mentorship")) {
+    db.all("SELECT skill, COUNT(*) as count FROM mentorship_requests GROUP BY skill ORDER BY count DESC LIMIT 3", (err, rows) => {
+      if (err) return res.json({ reply: "Sorry, I couldn't access the learning and mentorship database." });
+      if (rows.length === 0) return res.json({ reply: "There are currently no active learning or mentorship requests in the system." });
+      
+      const interestText = rows.map(r => `${r.skill.toUpperCase()} (${r.count} requests)`).join(', ');
+      return res.json({ reply: `Across the teams, the highest learning interest is currently directed towards: ${interestText}.` });
+    });
+    return;
+  }
+
+  // 4. Specific Skill Search (e.g. "who knows python")
+  if (qLower.includes("who knows") || qLower.includes("experts in")) {
+    const match = qLower.match(/(?:who knows|experts in)\s+([a-zA-Z0-9]+)/);
+    if (match && match[1]) {
+      const searchedSkill = match[1];
+      db.all(`SELECT u.name FROM users u JOIN skills s ON u.id = s.userId WHERE LOWER(s.skillName) = ? AND s.isVerified = 1`, [searchedSkill], (err, rows) => {
+        if (err) return res.json({ reply: "Error searching for experts." });
+        if (rows.length === 0) return res.json({ reply: `We currently do not have any verified experts in ${searchedSkill.toUpperCase()}.` });
+        
+        const names = rows.map(r => r.name).join(', ');
+        return res.json({ reply: `The following employees are verified experts in ${searchedSkill.toUpperCase()}: ${names}.` });
+      });
+      return;
+    }
+  }
+
+  // 5. Dynamic Fallback
+  res.json({ reply: `Based on my real-time analysis of the dashboard data regarding "${query}", we are currently focusing heavily on Data Engineering and Cloud infrastructure. We have a growing need for Snowflake and AWS expertise in upcoming projects.` });
 });
 
 const axios = require('axios');
