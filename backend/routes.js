@@ -222,62 +222,60 @@ router.post('/ai/match-project', (req, res) => {
   });
 });
 
-// 6. Org Insights AI Mock - Now Dynamic!
+// Import Azure OpenAI SDK
+const { DefaultAzureCredential, getBearerTokenProvider } = require('@azure/identity');
+const { AzureOpenAI } = require('openai');
+
+// Initialize Azure client (Note: Azure AD requires the appropriate environment variables 
+// like AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET to be set on Render for this to work in production).
+const credential = new DefaultAzureCredential();
+const tokenProvider = getBearerTokenProvider(
+  credential,
+  "https://cognitiveservices.azure.com/.default"
+);
+
+const azureClient = new AzureOpenAI({
+  azureEndpoint: "https://bootcampjab26-aiapps-build.cognitiveservices.azure.com/",
+  azureADTokenProvider: tokenProvider,
+  apiVersion: "2024-12-01-preview"
+});
+
+// 6. Org Insights AI - Powered by Azure OpenAI
 router.post('/ai/insights', (req, res) => {
   const { query } = req.body;
-  const qLower = query.toLowerCase();
   
-  // 1. Employee Count Query
-  if (qLower.includes("how many employees") || qLower.includes("total employees") || qLower.includes("headcount")) {
-    db.get("SELECT COUNT(*) as count FROM users", (err, row) => {
-      if (err) return res.json({ reply: "Sorry, I encountered an error accessing the employee database." });
-      return res.json({ reply: `Systech currently has ${row.count} registered employees actively working across our projects.` });
-    });
-    return;
-  }
-  
-  // 2. Skills Query
-  if (qLower.includes("most common skills") || qLower.includes("top skills") || qLower.includes("what skills")) {
-    db.all("SELECT skillName, COUNT(*) as count FROM skills WHERE isVerified = 1 GROUP BY skillName ORDER BY count DESC LIMIT 3", (err, rows) => {
-      if (err) return res.json({ reply: "Sorry, I couldn't analyze the skills database right now." });
-      if (rows.length === 0) return res.json({ reply: "Currently, no verified skills have been recorded in the organization." });
+  // 1. Fetch organizational data to provide context to the AI
+  db.all('SELECT name, email, role FROM users', (err, users) => {
+    db.all('SELECT u.name, s.skillName FROM skills s JOIN users u ON u.id = s.userId WHERE s.isVerified = 1', (err, skills) => {
       
-      const skillText = rows.map(r => `${r.skillName.toUpperCase()} (${r.count} experts)`).join(', ');
-      return res.json({ reply: `The most commonly verified skills in our organization are currently: ${skillText}.` });
-    });
-    return;
-  }
-
-  // 3. Mentorship / Learning Interests Query
-  if (qLower.includes("learning interests") || qLower.includes("want to learn") || qLower.includes("training") || qLower.includes("mentorship")) {
-    db.all("SELECT skill, COUNT(*) as count FROM mentorship_requests GROUP BY skill ORDER BY count DESC LIMIT 3", (err, rows) => {
-      if (err) return res.json({ reply: "Sorry, I couldn't access the learning and mentorship database." });
-      if (rows.length === 0) return res.json({ reply: "There are currently no active learning or mentorship requests in the system." });
+      const context = `
+      You are a helpful HR and Organization Assistant for Systech.
+      Use this internal data to answer the user's question accurately. Keep answers concise, professional, and friendly.
       
-      const interestText = rows.map(r => `${r.skill.toUpperCase()} (${r.count} requests)`).join(', ');
-      return res.json({ reply: `Across the teams, the highest learning interest is currently directed towards: ${interestText}.` });
-    });
-    return;
-  }
+      Current Employees (${users.length} total): 
+      ${JSON.stringify(users)}
+      
+      Verified Employee Skills: 
+      ${JSON.stringify(skills)}
+      `;
 
-  // 4. Specific Skill Search (e.g. "who knows python")
-  if (qLower.includes("who knows") || qLower.includes("experts in")) {
-    const match = qLower.match(/(?:who knows|experts in)\s+([a-zA-Z0-9]+)/);
-    if (match && match[1]) {
-      const searchedSkill = match[1];
-      db.all(`SELECT u.name FROM users u JOIN skills s ON u.id = s.userId WHERE LOWER(s.skillName) = ? AND s.isVerified = 1`, [searchedSkill], (err, rows) => {
-        if (err) return res.json({ reply: "Error searching for experts." });
-        if (rows.length === 0) return res.json({ reply: `We currently do not have any verified experts in ${searchedSkill.toUpperCase()}.` });
-        
-        const names = rows.map(r => r.name).join(', ');
-        return res.json({ reply: `The following employees are verified experts in ${searchedSkill.toUpperCase()}: ${names}.` });
+      // 2. Call Azure OpenAI model
+      azureClient.chat.completions.create({
+        model: "gpt-5.4", // User's deployment name
+        messages: [
+          { role: "system", content: context },
+          { role: "user", content: query }
+        ]
+      })
+      .then(response => {
+        res.json({ reply: response.choices[0].message.content });
+      })
+      .catch(error => {
+        console.error("Azure OpenAI Error:", error);
+        res.json({ reply: "Sorry, I am having trouble connecting to Azure OpenAI. Please make sure the Azure Managed Identity is configured correctly on the server." });
       });
-      return;
-    }
-  }
-
-  // 5. Dynamic Fallback
-  res.json({ reply: `Based on my real-time analysis of the dashboard data regarding "${query}", we are currently focusing heavily on Data Engineering and Cloud infrastructure. We have a growing need for Snowflake and AWS expertise in upcoming projects.` });
+    });
+  });
 });
 
 const axios = require('axios');
