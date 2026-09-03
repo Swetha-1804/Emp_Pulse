@@ -226,19 +226,33 @@ router.post('/ai/match-project', (req, res) => {
 const { DefaultAzureCredential, getBearerTokenProvider } = require('@azure/identity');
 const { AzureOpenAI } = require('openai');
 
-// Initialize Azure client (Note: Azure AD requires the appropriate environment variables 
-// like AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET to be set on Render for this to work in production).
-const credential = new DefaultAzureCredential();
-const tokenProvider = getBearerTokenProvider(
-  credential,
-  "https://cognitiveservices.azure.com/.default"
-);
+let azureClient;
 
-const azureClient = new AzureOpenAI({
-  azureEndpoint: "https://bootcampjab26-aiapps-build.cognitiveservices.azure.com/",
-  azureADTokenProvider: tokenProvider,
-  apiVersion: "2024-12-01-preview"
-});
+try {
+  // If user provides a simple API Key in Render environment variables, use that (EASIEST METHOD)
+  if (process.env.AZURE_OPENAI_API_KEY) {
+    azureClient = new AzureOpenAI({
+      azureEndpoint: "https://bootcampjab26-aiapps-build.cognitiveservices.azure.com/",
+      apiKey: process.env.AZURE_OPENAI_API_KEY,
+      apiVersion: "2024-12-01-preview"
+    });
+  } else {
+    // Otherwise, fallback to the complex Azure AD Managed Identity method
+    const credential = new DefaultAzureCredential();
+    const tokenProvider = getBearerTokenProvider(
+      credential,
+      "https://cognitiveservices.azure.com/.default"
+    );
+
+    azureClient = new AzureOpenAI({
+      azureEndpoint: "https://bootcampjab26-aiapps-build.cognitiveservices.azure.com/",
+      azureADTokenProvider: tokenProvider,
+      apiVersion: "2024-12-01-preview"
+    });
+  }
+} catch (e) {
+  console.error("Failed to initialize Azure OpenAI client:", e);
+}
 
 // 6. Org Insights AI - Powered by Azure OpenAI
 router.post('/ai/insights', (req, res) => {
