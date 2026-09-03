@@ -14,12 +14,10 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@azure/identity": "^4.13.2",
     "axios": "^1.19.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "nodemailer": "^9.0.5",
-    "openai": "^7.9.0",
     "sqlite3": "^6.0.1"
   }
 }
